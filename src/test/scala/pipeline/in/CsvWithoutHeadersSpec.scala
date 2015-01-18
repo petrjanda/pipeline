@@ -1,6 +1,6 @@
 package pipeline.in
 
-import _root_.pipeline.in.pipeline.model.DataRow
+import pipeline.model.DataRow
 import akka.actor.ActorSystem
 import akka.testkit.{ImplicitSender, TestKit}
 import org.scalatest.{BeforeAndAfterAll, WordSpecLike, MustMatchers}

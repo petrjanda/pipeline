@@ -1,3 +1,3 @@
-package pipeline.in.pipeline.model
+package pipeline.model
 
 case class DataRow[T](data:Map[String, T])

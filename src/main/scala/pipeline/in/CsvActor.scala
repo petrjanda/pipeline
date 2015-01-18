@@ -47,6 +47,8 @@ class CsvActor(lines:Iterator[String], headers:List[String], next:ActorRef) exte
       if(lines.hasNext) {
         sender() ! CsvLineActor.Parse(lines.next)
       } else {
+        sender() ! CsvLineActor.Stop
+
         if((working - sender()).isEmpty) next ! Done
       }
     }

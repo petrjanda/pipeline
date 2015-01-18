@@ -1,12 +1,14 @@
 package pipeline.in
 
 import _root_.pipeline.in.CsvActor.InvalidLine
-import _root_.pipeline.in.pipeline.model.DataRow
+import _root_.pipeline.model.DataRow
+import pipeline.model.DataRow
 import akka.actor.{Props, Actor, ActorRef}
 import au.com.bytecode.opencsv.CSVParser
 
 object CsvLineActor {
   case object Start
+  case object Stop
   case class Parse(line:String)
   case object GetLine
 
@@ -18,8 +20,8 @@ class CsvLineActor(next:ActorRef, headers:List[String]) extends Actor {
 
   val p = new CSVParser(',')
 
-  def receive = {
-    case Start => sender() ! GetLine
+  def active:Receive = {
+    case Stop => context.become(inactive)
 
     case Parse(line) => {
       val values = parseLine(line)
@@ -28,6 +30,16 @@ class CsvLineActor(next:ActorRef, headers:List[String]) extends Actor {
       sender() ! GetLine
     }
   }
+
+  def inactive:Receive = {
+    case Start => {
+      context.become(active)
+
+      sender() ! GetLine
+    }
+  }
+
+  def receive = inactive
 
   protected def buildDataRow(values:List[String]) = {
     DataRow[String](headers.zip(values).toMap)
