@@ -18,6 +18,8 @@ At the moment, the focus is on columnar data (in Scala represented as `Map[Strin
 
 # Usage
 
+To demonstrate the easiest use case, the following example does perform simple ETL-like data transformation taking CSV file as an input and indexing it to the ElasticSearch `test` index as documents of type `foo`.
+
 ```scala
 import akka.actor.ActorSystem
 import pipeline.in.CsvActor
@@ -45,3 +47,5 @@ object TestApp extends App {
   system.awaitTermination()
 }
 ```
+
+Using the Akka actors to perform individual steps of the processing, one is able to plugin intermediate step, which can do any type of transformation (mapping, reducing, data types manipulation, etc.).
