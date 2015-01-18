@@ -8,13 +8,13 @@ At the moment, the focus is on columnar data (in Scala represented as `Map[Strin
 
 ## Input
 
-[x] CSV file with headers
-[x] CSV file without headers
-[ ] JSON records file (one JSON value per line)
+- [x] CSV file with headers
+- [x] CSV file without headers
+- [ ] JSON records file (one JSON value per line)
 
 ## Output
 
-[x] ElasticSearch index
+- [x] ElasticSearch index
 
 # Usage
 
@@ -34,11 +34,11 @@ object TestApp extends App {
     hosts = List(("localhost", 9300))
   )
 
-  val next = system.actorOf(EsActor.props("test", "foo", cluster), "out")
+  val out = system.actorOf(EsActor.props("test", "foo", cluster), "out")
 
   // Input
   val source = Source.fromFile("test.csv")
-  val in = system.actorOf(CsvActor.props(source, next), "in")
+  val in = system.actorOf(CsvActor.props(source, out), "in")
 
   in ! CsvActor.Start
 
