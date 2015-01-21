@@ -48,7 +48,7 @@ private class BatchActor(size:Int, cluster:EsClusterAddress) extends Actor with 
         actor ! BatchExecuteActor.Close
 
         Thread.sleep(1000)
-        
+
         context.system.shutdown()
       }
     }
