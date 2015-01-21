@@ -1,10 +1,8 @@
 import akka.actor.ActorSystem
 import akka.stream.FlowMaterializer
 import akka.stream.scaladsl._
-import au.com.bytecode.opencsv.CSVParser
-import pipeline.model.{DataRow, EsClusterAddress}
-import pipeline.streams.{EsIndexFlowFactory, CsvParserFlowFactory}
-
+import pipeline.model.EsClusterAddress
+import pipeline.streams.{EsIndex, CsvParser}
 
 object StreamApp extends App {
   implicit val system = ActorSystem("Sys")
@@ -12,32 +10,28 @@ object StreamApp extends App {
 
   import system.dispatcher
 
-  // Config
+  // Configuration
   val lines = io.Source.fromFile("insurance.csv").getLines()
+  val headersLine = lines.next
   val cluster = EsClusterAddress("elasticsearch",
     List("localhost" -> 9300)
   )
 
-  val headers = line.next()
+  // Console sink
+  val consoleSink = Sink.foreach(println)
 
-  // Flows
-  val source = Source(lines.toStream)
-
-  val csvParser = CsvParserFlowFactory().flow(headers)
-
-  val indexFactory = EsIndexFlowFactory[String](cluster)
-  val esIndexer = indexFactory.flow("foo/bar")
-
-  val console = Sink.foreach[Any](item => print('.'))
-
+  // Flow
   val flow = FlowGraph { implicit builder =>
     import FlowGraphImplicits._
 
-    source ~> csvParser ~> esIndexer ~> console
+    val csvParser = CsvParser().flow(headersLine)
+    val esIndex = EsIndex(cluster).flow[String]("test/test")
+
+    Source(lines.toStream) ~> csvParser ~> esIndex ~> consoleSink
   }.run()
 
-  flow.get(console).onComplete { _ =>
-    indexFactory.close
-    system.shutdown()
+  // Terminate
+  flow.get(consoleSink).onComplete {
+    case _ => system.shutdown()
   }
 }

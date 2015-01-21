@@ -10,24 +10,22 @@ import pipeline.model.{DataRow, EsClusterAddress}
 /**
  * Created by petr on 20/01/2015.
  */
-case class EsIndexFlowFactory[T](cluster: EsClusterAddress) {
-  type Data = DataRow[T]
-
+case class EsIndex(cluster: EsClusterAddress) {
   val settings = ImmutableSettings.settingsBuilder()
     .put("http.enabled", false)
     .put("cluster.name", cluster.name)
 
   val client = ElasticClient.remote(settings.build(), cluster.hosts: _*)
 
-  def flow(indexAs:String) = Flow() { implicit builder =>
+  def flow[T](indexAs:String, batchSize:Int = 100) = Flow() { implicit builder =>
     import akka.stream.scaladsl.FlowGraphImplicits._
 
-    val undefinedSource = UndefinedSource[Data]
-    val undefinedSink = UndefinedSink[Seq[Data]]
+    val in = UndefinedSource[DataRow[T]]
+    val out = UndefinedSink[Seq[DataRow[T]]]
 
-    val grouper = Flow[Data].grouped(100)
+    val batchBuilder = Flow[DataRow[T]].grouped(batchSize)
 
-    val indexMapper = Flow[Seq[Data]].map(rows => {
+    val indexMapper = Flow[Seq[DataRow[T]]].map(rows => {
       import com.sksamuel.elastic4s.ElasticDsl._
 
       val definitions = rows.toList.map(row => {
@@ -41,9 +39,9 @@ case class EsIndexFlowFactory[T](cluster: EsClusterAddress) {
       rows
     })
 
-    undefinedSource ~> grouper ~> indexMapper ~> undefinedSink
+    in ~> batchBuilder ~> indexMapper ~> out
 
-    undefinedSource -> undefinedSink
+    in -> out
   }
 
   def close = {

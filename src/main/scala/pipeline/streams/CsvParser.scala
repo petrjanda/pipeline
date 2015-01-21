@@ -7,7 +7,7 @@ import pipeline.model.DataRow
 /**
  * Created by petr on 20/01/2015.
  */
-case class CsvParserFlowFactory() {
+case class CsvParser() {
   val csvParser = new CSVParser()
 
   def flow(headersLine:String) = {
