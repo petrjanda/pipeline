@@ -13,15 +13,15 @@ object StreamApp extends App {
   import system.dispatcher
 
   // Config
-  val file = io.Source.fromFile("insurance.csv")
+  val lines = io.Source.fromFile("insurance.csv").getLines()
   val cluster = EsClusterAddress("elasticsearch",
     List("localhost" -> 9300)
   )
 
-  val headers = file.getLines().next()
+  val headers = line.next()
 
   // Flows
-  val source = Source(file.getLines().toStream)
+  val source = Source(lines.toStream)
 
   val csvParser = CsvParserFlowFactory().flow(headers)
 
@@ -32,8 +32,6 @@ object StreamApp extends App {
 
   val flow = FlowGraph { implicit builder =>
     import FlowGraphImplicits._
-
-
 
     source ~> csvParser ~> esIndexer ~> console
   }.run()
