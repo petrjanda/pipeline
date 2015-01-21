@@ -17,6 +17,8 @@ object StreamApp extends App {
     List("localhost" -> 9300)
   )
 
+  val esIndex = EsIndex(cluster)
+
   // Console sink
   val consoleSink = Sink.foreach(println)
 
@@ -25,13 +27,16 @@ object StreamApp extends App {
     import FlowGraphImplicits._
 
     val csvParser = CsvParser().flow(headersLine)
-    val esIndex = EsIndex(cluster).flow[String]("test/test")
+    val esIndexFlow = esIndex.flow[String]("test/test")
 
-    Source(lines.toStream) ~> csvParser ~> esIndex ~> consoleSink
+    Source(lines.toStream) ~> csvParser ~> esIndexFlow ~> consoleSink
   }.run()
 
   // Terminate
   flow.get(consoleSink).onComplete {
-    case _ => system.shutdown()
+    case _ => {
+      esIndex.close
+      system.shutdown()
+    }
   }
 }
